@@ -1,0 +1,28 @@
+[Unit]
+Description=One-time GLM-5.3 TP2 serving restore after the 2026-11-05 power tuning (self-disables on success)
+# The first run (2026-11-05 10:18:22, 40 ms after boot) died at "cannot ssh to 192.168.1.247
+# without a password": the route to the worker did not exist yet. After=network-online.target did
+# NOT protect us — on this OS both wait-online providers are disabled, so the target completes
+# instantly. Hence (i) a hard gate on NetworkManager-wait-online (NM is the active backend,
+# nm-online exists), (ii) an explicit retry loop on worker ssh inside ExecStart, (iii)
+# Restart=on-failure so one transient failure is not the end of the restore.
+After=docker.service NetworkManager-wait-online.service
+Wants=docker.service NetworkManager-wait-online.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+User=alangeb
+Environment=HOME=/home/alangeb
+WorkingDirectory=/home/alangeb/GLM-5.3-Flash-EXL3-2x-DGX-Sparks-TensorFold
+ExecStart=/bin/bash -c 'export PATH=/usr/local/bin:/usr/bin:/bin:/home/alangeb/.local/bin; W=$(sed -n "s/^WORKER=//p" scripts/local.sh | head -1); for i in $(seq 1 40); do ssh -o BatchMode=yes -o ConnectTimeout=5 "$W" true && break; sleep 15; done; ./start.sh restart >> /tmp/power-serve-restore.log 2>&1'
+# The self-disable cannot run here: every Exec* line drops to User=alangeb, and `systemctl disable`
+# on a system unit needs root. "-+" = run it, ignore the outcome; it disables on success when run as
+# root, and `apply.sh revert` removes the unit. Manual: sudo systemctl disable power-serve-restore.
+ExecStartPost=-/bin/systemctl disable power-serve-restore.service
+Restart=on-failure
+RestartSec=45
+TimeoutStartSec=2400
+
+[Install]
+WantedBy=multi-user.target

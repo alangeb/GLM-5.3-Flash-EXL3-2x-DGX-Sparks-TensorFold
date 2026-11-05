@@ -1,0 +1,12 @@
+[Unit]
+Description=Power-tuning post-boot verification (appends to /var/log/power-verify.log)
+After=gpu-clock-cap.service cpu-clock-cap.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c '/home/alangeb/tools-power/apply.sh verify >> /var/log/power-verify.log 2>&1 || true'
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

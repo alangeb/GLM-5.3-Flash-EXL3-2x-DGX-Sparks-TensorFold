@@ -1,0 +1,6 @@
+# /etc/default/gpu-clock-cap — GB10 GPU SM clock cap (headless inference box)
+# Source of truth: repo tools/power/units/ (apply.sh installs it). Value rationale:
+# NVIDIA forum "Let's optimize ... DGX Spark" (t/387929) + peter.h177's wall-power sweep
+# (docs/power-tuning-2026-11-05.md in this repo): decode is memory-bound on GB10, so
+# capping the SM clock at 1800 MHz costs ~1-3% decode and saves ~25% wall power.
+GPU_MAX_MHZ=1800

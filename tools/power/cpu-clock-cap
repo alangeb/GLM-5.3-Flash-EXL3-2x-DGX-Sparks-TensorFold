@@ -1,0 +1,10 @@
+# /etc/default/cpu-clock-cap — GB10 CPU P-core (Cortex-X925) frequency cap
+# Source of truth: repo tools/power/units/ (apply.sh installs it). Rationale:
+# docs/power-tuning-2026-11-05.md (forum t/387929): inference ranks spin-wait on the
+# GPU at 100% CPU; a spinning P-core at 3900 MHz is the most expensive way to wait.
+# 3000 MHz: same throughput, ~8-12% less energy, ~17 C cooler hot zone.
+# Never cap below 2808 (E-core max): below it the scheduler moves hot threads to E-cores.
+# NOTE: systemd EnvironmentFile does NOT support trailing comments — comment lines stand alone.
+# P-cores on GB10: cpu5-9 and cpu15-19 (verify: cpuinfo_max_freq==3900000).
+CPU_X925_CORES=5-9,15-19
+CPU_X925_MAX_MHZ=3000

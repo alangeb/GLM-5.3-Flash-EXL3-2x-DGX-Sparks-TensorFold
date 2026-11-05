@@ -1,0 +1,21 @@
+[Unit]
+Description=GB10 fixed MHz GPU SM clock cap (headless inference box)
+Documentation=file:///home/alangeb/GLM-5.3-Flash-EXL3-2x-DGX-Sparks-TensorFold/docs/power-tuning-2026-11-05.md
+Wants=nvidia-persistenced.service
+After=nvidia-persistenced.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/gpu-clock-cap
+ExecStart=/usr/bin/nvidia-smi -pm 1
+ExecStart=/usr/bin/nvidia-smi -lgc 0,${GPU_MAX_MHZ}
+ExecStop=/usr/bin/nvidia-smi -rgc
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,19 @@
+[Unit]
+Description=GB10 fixed MHz CPU clock cap (P-cores, Cortex-X925)
+Documentation=file:///home/alangeb/GLM-5.3-Flash-EXL3-2x-DGX-Sparks-TensorFold/docs/power-tuning-2026-11-05.md
+After=nv-cpu-governor.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/cpu-clock-cap
+ExecStart=/usr/bin/cpupower -c ${CPU_X925_CORES} frequency-set -u ${CPU_X925_MAX_MHZ}MHz
+ExecStop=/usr/bin/cpupower -c ${CPU_X925_CORES} frequency-set -u 3900MHz
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
