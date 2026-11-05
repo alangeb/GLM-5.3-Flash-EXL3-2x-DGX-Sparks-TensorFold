@@ -112,8 +112,9 @@ accepts nothing else, and `scripts/nodes.sh` `worker()` uses plain `ssh -o Batch
 must stay the default identity). The unit simply ran **before the route to the worker existed**:
 `After=network-online.target` bought nothing, because on this OS **both** wait-online providers
 (`NetworkManager-wait-online`, `systemd-networkd-wait-online`) are *disabled*, so the target completes
-instantly. Consequence of the failure: the stack stayed down ~2 h and, with it, every session pointed at
-`http://cuda:8000` (all three live tau sessions), `:8000/health` → no connection. **Fix applied:** the unit now
+instantly. Consequence of the failure: the TP2 stack stayed down ~2 h. **Not** an agent outage — the live tau
+sessions talk to `http://cuda:8000`, a different box (192.168.100.206, sglang, 200k window) that never went
+down; this recipe's endpoint is `http://192.168.1.253:8000`, and that was the thing that was down. **Fix applied:** the unit now
 `Wants=`/`After=` `NetworkManager-wait-online.service` (NM is the active backend, `nm-online` present),
 retries worker ssh up to 40×15 s before calling `start.sh`, and `Restart=on-failure RestartSec=45` with
 `StartLimitIntervalSec=0`; reinstalled with `sudo ./apply.sh serverestore`. The self-disable was never
@@ -124,6 +125,13 @@ idle artifact — 493 MHz at idle, the cap only proves under load); DispFrmStatu
 request var consumed by UEFI; **MemTotal 123.2 GiB (+1.5)**; target multi-user; caps active; all
 disables/masks hold; `apply.sh verify` rc=0 on **both** nodes. Not yet re-proven under load (needs the
 stack up): `./tools/power/loadtest.sh 8` then `clocks.sm` ≤ 1800 and cpu17 ≤ 3000000.
+
+**13:40 re-check with the stack back up (manual `./start.sh restart`, 122 s to live):** caps **proven under
+load on both nodes** — `clocks.sm` 1774 MHz, `cpu17` 3000000, 49.6 W, 53-60 °C (at idle both read 1787 MHz at
+6.5 W, which is DVFS downclocking, not the cap: the load is the proof). `pool_tokens 2,326,528` at
+`--parallel 4` (default for TP=2 + dflash2), C5 probe `27*31` → `837`, `requests_total` ticking. That pool
+reading beats the 1,968,128 above — the pool auto-sizes from host headroom and both nodes were freshly
+rebooted when it was taken; re-read `pool_tokens` from `/health` rather than trusting any single figure.
 
 ## Revert / undo (per node)
 
